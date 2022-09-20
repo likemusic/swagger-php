@@ -22,8 +22,16 @@ class ExpandClasses
 
     public function __invoke(Analysis $analysis)
     {
+        $knownSubSchemas = [
+            OA\XmlContent::class,
+            OA\Items::class,
+            OA\AdditionalProperties::class,
+            OA\Property::class,
+            OA\JsonContent::class,
+        ];
+
         /** @var OA\Schema[] $schemas */
-        $schemas = $analysis->getAnnotationsOfType([OA\Schema::class, OAT\Schema::class], true);
+        $schemas = $analysis->getAnnotationsOfType([OA\Schema::class, OAT\Schema::class], false, $knownSubSchemas);
 
         foreach ($schemas as $schema) {
             if ($schema->_context->is('class')) {

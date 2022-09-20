@@ -297,33 +297,47 @@ class Analysis
     }
 
     /**
-     * @param string|array $classes One ore more class names
+     * @param string|array $classes One or more class names
      * @param bool         $strict  in non-strict mode child classes are also detected
+     * @param array        $exclude One or more class names which should be excluded
      *
      * @return OA\AbstractAnnotation[]
      */
-    public function getAnnotationsOfType($classes, bool $strict = false): array
+    public function getAnnotationsOfType($classes, bool $strict = false, $exclude = []): array
     {
+        if (!is_array($classes)) {
+            $classes = (array) $classes;
+        }
+
         $annotations = [];
-        if ($strict) {
-            foreach ((array) $classes as $class) {
-                foreach ($this->annotations as $annotation) {
-                    if (get_class($annotation) === $class) {
-                        $annotations[] = $annotation;
-                    }
-                }
-            }
-        } else {
-            foreach ((array) $classes as $class) {
-                foreach ($this->annotations as $annotation) {
-                    if ($annotation instanceof $class) {
-                        $annotations[] = $annotation;
-                    }
-                }
+
+        foreach ($this->annotations as $annotation) {
+            if ($this->isOneOfType($annotation, $classes, $strict)
+                && !$this->isOneOfType($annotation, $exclude, $strict)
+            ) {
+                $annotations[] = $annotation;
             }
         }
 
         return $annotations;
+    }
+
+    private function isOneOfType(object $needleObject, array $haystackClassNames, bool $strict = false): bool
+    {
+        foreach ($haystackClassNames as $haystackClassName) {
+            if ($this->isType($needleObject, $haystackClassName, $strict)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function isType(object $obj, string $className, bool $strict = false): bool
+    {
+        return $strict
+            ? (get_class($obj) === $className)
+            : $obj instanceof $className;
     }
 
     /**
